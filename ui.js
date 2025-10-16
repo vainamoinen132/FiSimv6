@@ -1,8 +1,7 @@
 /* ===========================================================
-   Resort Life Sim — UI (lean DOM renderer)
-   - Binds HTML elements and wires them to Engine.
-   - Renders: topbar (day/phase/energy), locations, actions,
-     scene box (text + image), roster, log, phase controls.
+   Resort Life Sim — UI (lean DOM renderer) — UPDATED
+   - Adds working Save/Load (localStorage "resort.save")
+   - Keeps minimal text-first UI
    =========================================================== */
 
 (function () {
@@ -196,18 +195,44 @@
       nameEl.textContent = ch.name + (ch.name === you ? " (You)" : "");
       const sub = document.createElement("div");
       sub.className = "card-sub";
-      sub.textContent = `${ch.age} • ${ch.height}cm • Mood ${ch.status.mood} • Arousal ${ch.status.arousal}`;
+      const inj = ch.status.injury ? ` • ${ch.status.injury} injury` : "";
+      sub.textContent = `${ch.age} • ${ch.height}cm • Mood ${ch.status.mood} • Arousal ${ch.status.arousal}${inj}`;
       body.appendChild(nameEl);
       body.appendChild(sub);
 
       const actions = document.createElement("div");
       actions.className = "card-actions";
       if (ch.name !== you) {
-        actions.appendChild(rosterBtn("Mingle", () => startActionFlow({ id: "mingle", label: "Mingle / Flirt", needsTarget: true }, ch.name)));
-        actions.appendChild(rosterBtn("Fight",  () => startActionFlow({ id: "fight",  label: "Fight (Spar)",  needsTarget: true }, ch.name)));
+        actions.appendChild(rosterBtn("Mingle", () => {
+          startActionFlow({ id: "mingle", label: "Mingle / Flirt", needsTarget: true });
+          // auto-select target
+          const ok = Engine.doAction("mingle", ch.name);
+          if (ok) {
+            UIState.lastScene = {
+              title: `Mingle → ${ch.name}`,
+              text: sceneTextFromAction("mingle", ch.name),
+              imgName: ch.name
+            };
+            postActionRefresh();
+          }
+        }));
+        actions.appendChild(rosterBtn("Fight", () => {
+          startActionFlow({ id: "fight", label: "Fight (Spar)", needsTarget: true });
+          const ok = Engine.doAction("fight", ch.name);
+          if (ok) {
+            UIState.lastScene = {
+              title: `Fight → ${ch.name}`,
+              text: sceneTextFromAction("fight", ch.name),
+              imgName: ch.name
+            };
+            postActionRefresh();
+          }
+        }));
       } else {
+        // Switch player option (useful if you later allow selecting any avatar)
         actions.appendChild(rosterBtn("Set as Player", () => {
           Engine.setPlayer(ch.name);
+          setStatus(`You are now ${ch.name}.`);
         }));
       }
 
@@ -243,6 +268,56 @@
     setStatus("Action resolved.");
   }
 
+  // ---- Save / Load ----
+  function doSave() {
+    // Persist only the Engine state; shallow copy to avoid circular refs
+    const S = Engine.getState();
+    // Minimal snapshot (safe fields only)
+    const save = {
+      day: S.day,
+      phaseIndex: S.phaseIndex,
+      energy: S.energy,
+      locationId: S.locationId,
+      seed: S.seed,
+      settings: S.settings,
+      characters: S.characters,
+      relationships: S.relationships,
+      highlights: S.highlights,
+      log: S.log
+    };
+    localStorage.setItem("resort.save", JSON.stringify(save));
+    setStatus("Game saved.");
+  }
+
+  function doLoad() {
+    const raw = localStorage.getItem("resort.save");
+    if (!raw) return alert("No save found.");
+    try {
+      const data = JSON.parse(raw);
+      const S = Engine.getState();
+      // Overwrite known fields (in-place so listeners still see same object)
+      S.day = data.day ?? S.day;
+      S.phaseIndex = data.phaseIndex ?? S.phaseIndex;
+      S.energy = data.energy ?? S.energy;
+      S.locationId = data.locationId ?? S.locationId;
+      S.seed = data.seed ?? S.seed;
+      S.settings = Object.assign({}, S.settings, data.settings || {});
+      S.characters = data.characters || S.characters;
+      S.relationships = data.relationships || S.relationships;
+      S.highlights = data.highlights || [];
+      S.log = data.log || [];
+
+      // Refresh UI
+      UIState.lastScene = { title: `Loaded`, text: `Save loaded. Day ${S.day}, ${Engine.getPhaseLabel()}.`, imgName: null };
+      Engine.onChange(() => {}); // no-op; ensures UI keeps subscribed
+      renderAll();
+      setStatus("Save loaded.");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to load save.");
+    }
+  }
+
   // ---- Controls ----
   function wireControls() {
     el.btnNextPhase.addEventListener("click", () => {
@@ -268,23 +343,8 @@
     el.btnSettings.addEventListener("click", () => {
       alert("Settings coming later (session length, explicit toggle, seed).");
     });
-    el.btnSave.addEventListener("click", () => {
-      const save = JSON.stringify(Engine.getState());
-      localStorage.setItem("resort.save", save);
-      setStatus("Game saved to localStorage.");
-    });
-    el.btnLoad.addEventListener("click", () => {
-      const save = localStorage.getItem("resort.save");
-      if (!save) return alert("No save found.");
-      try {
-        // NOTE: For a real loader, we’d rehydrate carefully. For this lean UI,
-        // we simply inform the user—engine’s own loader will come later.
-        alert("Loader will be implemented in a later file. For now, start a new session.");
-      } catch (e) {
-        console.error(e);
-        alert("Failed to load save.");
-      }
-    });
+    el.btnSave.addEventListener("click", doSave);
+    el.btnLoad.addEventListener("click", doLoad);
   }
 
   // ---- Initial render + subscriptions ----
