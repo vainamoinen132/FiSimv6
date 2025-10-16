@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Resort Life Sim</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Minimal styles only; I’ll deliver style.css next -->
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- App Shell -->
+  <div id="app">
+
+    <!-- Top Bar: day/phase/energy -->
+    <header class="topbar">
+      <div class="brand">🏝️ Resort Life Sim</div>
+      <div class="session">
+        <span id="dayCounter">Day 1</span>
+        <span class="divider">•</span>
+        <span id="phaseLabel">Morning</span>
+        <span class="divider">•</span>
+        <span id="energyLabel">Energy: 100</span>
+      </div>
+      <div class="settings">
+        <button id="btnSettings" title="Game Options">⚙️</button>
+        <button id="btnSave" title="Save">💾</button>
+        <button id="btnLoad" title="Load">📂</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- Left: Map / Locations -->
+      <aside class="sidebar" id="leftPanel">
+        <h3>Locations</h3>
+        <div id="locationList" class="list">
+          <!-- Buttons injected here (Beach, Club, Arena, Villas, Spa, Gym) -->
+        </div>
+
+        <h3 style="margin-top:1rem;">Actions</h3>
+        <div id="quickActions" class="list">
+          <!-- Contextual quick actions (Train, Mingle, Hunt Rival, Rest) -->
+        </div>
+      </aside>
+
+      <!-- Center: Scene / Log / Choices -->
+      <section class="center" id="centerPanel">
+        <div id="sceneTitle" class="scene-title">Welcome</div>
+
+        <div id="sceneImage" class="scene-image">
+          <!-- Optional background or character picture for the active scene -->
+          <!-- A placeholder SVG will show if no image is set -->
+          <img id="sceneImgEl" alt="scene" />
+        </div>
+
+        <div id="sceneText" class="scene-text">
+          This is a text-based life sim set in a luxury resort. Choose a location each phase, meet people, flirt, fight, and let the drama unfold.
+        </div>
+
+        <div id="choiceList" class="choices">
+          <!-- Choice buttons injected here -->
+        </div>
+
+        <div id="logPanel" class="log">
+          <!-- Scrolling log of highlights and outcomes -->
+        </div>
+      </section>
+
+      <!-- Right: Roster / Character Cards -->
+      <aside class="sidebar" id="rightPanel">
+        <h3>Roster</h3>
+        <div id="rosterList" class="roster">
+          <!-- Character cards injected here -->
+        </div>
+      </aside>
+    </main>
+
+    <!-- Bottom: Phase Controls -->
+    <footer class="bottombar">
+      <div class="phase-controls">
+        <button id="btnPrevPhase" disabled>⏮ Prev</button>
+        <button id="btnNextPhase">Next Phase ⏭</button>
+        <button id="btnEndDay">End Day 🌙</button>
+      </div>
+      <div class="status-mini">
+        <span id="statusMini">Ready.</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Scripts: I will deliver these files next, in order. -->
+  <script src="./config.js"></script>
+  <script src="./characters.js"></script>
+  <script src="./engine.js"></script>
+  <script src="./ui.js"></script>
+  <script src="./main.js"></script>
+
+  <!-- Minimal inline placeholder image (fallback if none provided) -->
+  <script>
+    // Small inline SVG data URI used when a character/scene has no image
+    window.__PLACEHOLDER_PIC__ = 'data:image/svg+xml;utf8,' + encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+        <rect width="100%" height="100%" fill="#1f2937"/>
+        <g fill="#9ca3af" font-family="Arial, Helvetica, sans-serif">
+          <text x="50%" y="48%" dominant-baseline="middle" text-anchor="middle" font-size="22">No Image</text>
+          <text x="50%" y="58%" dominant-baseline="middle" text-anchor="middle" font-size="14">Resort Life Sim</text>
+        </g>
+      </svg>
+    `);
+  </script>
+</body>
+</html>
